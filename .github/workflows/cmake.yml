@@ -15,28 +15,17 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: lukka/get-cmake@latest
-      
-    # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
-    - name: Restore from cache and run vcpkg
-      uses: lukka/run-vcpkg@v2
+    - name: Build
+      uses: ashutoshvarma/action-cmake-build@master
       with:
-        # Response file stored in source control, it provides the list of ports and triplet(s).
-        vcpkgArguments: '@${{ env.vcpkgResponseFile }}'
-        # Location of the vcpkg as submodule of the repository.
-        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
-        vcpkgTriplet: x64-windows
-
-    - name: 'Run CMake with Ninja'
-      uses: lukka/run-cmake@v2.5
-      with:
-        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
-        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
-        useVcpkgToolchainFile: true
-        arch: win64_msvc2019_64
-        buildDirectory: '${{ runner.workspace }}/b//unixmakefiles'
-        cmakeAppendedArgs: '-GNinja '
-        # Or build multiple configurations out of a CMakeSettings.json file created with Visual Studio.
-        # cmakeListsOrSettingsJson: CMakeSettingsJson
-        # cmakeSettingsJsonPath: '${{ github.workspace }}/cmakesettings.json/CMakeSettings.json'
-        # configurationRegexFilter: '${{ matrix.configuration }}'
+        build-dir: ${{ runner.workspace }}/build
+        # will set the CC & CXX for cmake
+        cc: gcc
+        cxx: g++
+        build-type: Release
+        # Extra options pass to cmake while configuring project
+        configure-options: -DWEBP_BUILD_CWEBP=ON -DWEBP_UNICODE=ON
+        # install the build using cmake --install
+        install-build: true
+        # run build using '-j [parallel]' to use multiple threads to build
+        parallel: 14
