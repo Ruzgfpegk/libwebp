@@ -1,0 +1,45 @@
+name: libwebp manual compile for the Windows platform
+# Unicode should be on by default with CMake
+
+# Dispatch event:
+# curl -X POST -H "Accept: application/vnd.github.v3+json" https://api.github.com/repos/Ruzgfpegk/libwebp/actions/workflows/1/dispatches
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+    - v1.1.0
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: lukka/get-cmake@latest
+      
+    # Restore from cache the previously built ports. If "cache miss", then provision vcpkg, install desired ports, finally cache everything for the next run.
+    - name: Restore from cache and run vcpkg
+      uses: lukka/run-vcpkg@v3
+      with:
+        # Response file stored in source control, it provides the list of ports and triplet(s).
+        vcpkgArguments: '@${{ env.vcpkgResponseFile }}'
+        # Location of the vcpkg as submodule of the repository.
+        vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+        # Since the cache must be invalidated when content of the response file changes, let's
+        # compute its hash and append this to the computed cache's key.
+        appendedCacheKey: ${{ hashFiles(env.vcpkgResponseFile) }}
+        vcpkgTriplet: x64-windows
+
+    - name: 'Run CMake with Ninja'
+      uses: lukka/run-cmake@v2.5
+      with:
+        cmakeListsOrSettingsJson: CMakeListsTxtAdvanced
+        cmakeListsTxtPath: '${{ github.workspace }}/CMakeLists.txt'
+        useVcpkgToolchainFile: true
+        arch: win64_msvc2019_64
+        buildDirectory: '${{ runner.workspace }}/b//unixmakefiles'
+        cmakeAppendedArgs: '-GNinja '
+        # Or build multiple configurations out of a CMakeSettings.json file created with Visual Studio.
+        # cmakeListsOrSettingsJson: CMakeSettingsJson
+        # cmakeSettingsJsonPath: '${{ github.workspace }}/cmakesettings.json/CMakeSettings.json'
+        # configurationRegexFilter: '${{ matrix.configuration }}'
